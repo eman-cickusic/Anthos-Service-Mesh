@@ -1,0 +1,20 @@
+{
+  "displayName": "Frontend Latency SLO",
+  "goal": 0.995,
+  "calendarPeriod": "DAY",
+  "serviceLevelIndicator": {
+    "requestBased": {
+      "distributionCut": {
+        "distributionFilter": "metric.type=\"istio.io/service/server/response_latencies\" resource.type=\"k8s_container\" resource.label.\"cluster_name\"=monitoring.regex.full_match(\".*\") resource.label.\"namespace_name\"=\"default\" resource.label.\"service_name\"=\"frontend\"",
+        "range": {
+          "min": 0,
+          "max": 350
+        }
+      }
+    }
+  },
+  "userLabels": {
+    "service": "frontend",
+    "feature": "latency"
+  }
+}

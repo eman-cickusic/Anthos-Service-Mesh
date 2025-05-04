@@ -1,0 +1,275 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: gcr.io/bank-of-anthos/frontend:v0.5.0
+        ports:
+        - containerPort: 8080
+        env:
+        - name: PORT
+          value: "8080"
+        - name: ENABLE_TRACING
+          value: "true"
+        - name: SCHEME
+          value: "http"
+        - name: DEFAULT_USERNAME
+          value: "testuser"
+        - name: DEFAULT_PASSWORD
+          value: "password"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ledgerwriter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ledgerwriter
+  template:
+    metadata:
+      labels:
+        app: ledgerwriter
+    spec:
+      containers:
+      - name: ledgerwriter
+        image: gcr.io/bank-of-anthos/ledgerwriter:v0.5.0
+        ports:
+        - containerPort: 8080
+        env:
+        - name: PORT
+          value: "8080"
+        - name: ENABLE_TRACING
+          value: "true"
+        - name: LEDGER_DB_URI
+          value: "postgresql://accounts-admin:accounts-pwd@ledger-db:5432/ledger"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: balancereader
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: balancereader
+  template:
+    metadata:
+      labels:
+        app: balancereader
+    spec:
+      containers:
+      - name: balancereader
+        image: gcr.io/bank-of-anthos/balancereader:v0.5.0
+        ports:
+        - containerPort: 8080
+        env:
+        - name: PORT
+          value: "8080"
+        - name: ENABLE_TRACING
+          value: "true"
+        - name: BALANCE_DB_URI
+          value: "postgresql://accounts-admin:accounts-pwd@accounts-db:5432/accounts"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transactionhistory
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: transactionhistory
+  template:
+    metadata:
+      labels:
+        app: transactionhistory
+    spec:
+      containers:
+      - name: transactionhistory
+        image: gcr.io/bank-of-anthos/transactionhistory:v0.5.0
+        ports:
+        - containerPort: 8080
+        env:
+        - name: PORT
+          value: "8080"
+        - name: ENABLE_TRACING
+          value: "true"
+        - name: LEDGER_DB_URI
+          value: "postgresql://accounts-admin:accounts-pwd@ledger-db:5432/ledger"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: accounts-db
+  annotations:
+    mesh.gke.io/exclusion: "true"  # Database only deployed on gke-region1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: accounts-db
+  template:
+    metadata:
+      labels:
+        app: accounts-db
+    spec:
+      containers:
+      - name: accounts-db
+        image: gcr.io/bank-of-anthos/accounts-db:v0.5.0
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          value: "accounts-admin"
+        - name: POSTGRES_PASSWORD
+          value: "accounts-pwd"
+        - name: POSTGRES_DB
+          value: "accounts"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ledger-db
+  annotations:
+    mesh.gke.io/exclusion: "true"  # Database only deployed on gke-region1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ledger-db
+  template:
+    metadata:
+      labels:
+        app: ledger-db
+    spec:
+      containers:
+      - name: ledger-db
+        image: gcr.io/bank-of-anthos/ledger-db:v0.5.0
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          value: "accounts-admin"
+        - name: POSTGRES_PASSWORD
+          value: "accounts-pwd"
+        - name: POSTGRES_DB
+          value: "ledger"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+spec:
+  selector:
+    app: frontend
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ledgerwriter
+spec:
+  selector:
+    app: ledgerwriter
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: balancereader
+spec:
+  selector:
+    app: balancereader
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: transactionhistory
+spec:
+  selector:
+    app: transactionhistory
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: accounts-db
+spec:
+  selector:
+    app: accounts-db
+  ports:
+  - port: 5432
+    targetPort: 5432
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ledger-db
+spec:
+  selector:
+    app: ledger-db
+  ports:
+  - port: 5432
+    targetPort: 5432
+  type: ClusterIP
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: frontend-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: frontend-virtualservice
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - frontend-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: frontend
+        port:
+          number: 80
