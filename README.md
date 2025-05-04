@@ -1,4 +1,4 @@
-# Anthos Service Mesh Walkthrough
+# Anthos Service Mesh 
 
 ## Project Overview
 This repository documents a hands-on walkthrough of implementing and testing Anthos Service Mesh with a microservices-based application (Bank of Anthos) deployed across multiple GKE clusters. The walkthrough demonstrates key service mesh capabilities including cross-cluster service discovery, secure routing, observability, and security features.
