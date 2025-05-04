@@ -10,7 +10,6 @@ The implementation consists of:
 - Bank of Anthos application deployed across both clusters
 - Service mesh components enabling cross-cluster communication
 
-![Architecture Diagram](images/architecture.png)
 
 ## Prerequisites
 - Google Cloud Platform account with sufficient privileges
