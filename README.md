@@ -11,7 +11,7 @@ The implementation consists of:
 - Service mesh components enabling cross-cluster communication
 
 
-## Prerequisites
+## Prerequisites 
 - Google Cloud Platform account with sufficient privileges
 - Google Kubernetes Engine (GKE) enabled
 - Anthos Service Mesh installed and configured
