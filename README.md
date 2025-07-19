@@ -3,7 +3,7 @@
 ## Project Overview
 This repository documents a hands-on walkthrough of implementing and testing Anthos Service Mesh with a microservices-based application (Bank of Anthos) deployed across multiple GKE clusters. The walkthrough demonstrates key service mesh capabilities including cross-cluster service discovery, secure routing, observability, and security features.
 
-## Architecture
+## Architecture 
 The implementation consists of:
 - Two GKE clusters: `gke-region1` (us-east4) and `gke-region2` (europe-west1)
 - Anthos Service Mesh configured across both clusters
